@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import PokemonList from './components/PokemonList';
-import useDebounce from './Hooks/useDebounce'
+import useDebounce from './Hooks/useDebounce';
 import './App.css';
 
 const App = () => {
@@ -14,32 +14,42 @@ const App = () => {
     setInput(e.target.value);
   };
 
-  const searchPokemons = async () => {
-    let res = await axios.get(`https://pokeapi.co/api/v2/pokemon/${input}`);
-    setPokemon([res.data,...pokemon]);
-    console.log(res.data);
-    console.log(pokemon);
+  const existPokemon = (nombrePokemon) => { 
+    return pokemon.findIndex(item => item.name === nombrePokemon);
   };
 
-  const debouncedSearchPokemon = useDebounce(input, 1000)
+  const searchPokemons = async () => {
+    if (pokemon !== [...pokemon]) {
+      if(existPokemon(input) === -1 ) {
+        let res = await axios.get(`https://pokeapi.co/api/v2/pokemon/${input}`);
+        setPokemon([res.data,...pokemon]);
+        console.log(res.data);
+      }
+    }
+  };
+
+  const debouncedSearchPokemon = useDebounce(input, 2000)
 
   useEffect(() => {
     if (debouncedSearchPokemon) {
       setIsSearching(true);
       searchPokemons(debouncedSearchPokemon).then(results => {
         setIsSearching(false);
-        //setPokemon(pokemon);
       });
     } else {
-      setPokemon([]);
+      setPokemon([...pokemon]);
     }
-  }, [debouncedSearchPokemon])
+  }, [debouncedSearchPokemon]);
+
+  useEffect(() => {
+    setInput('')
+  }, [pokemon]);
   
   return (
-    <section className="Card">
+    <section>
       <form>
         <label>Busca Pokemon: </label>
-        <input type="text" name="name" placeholder="Introduce Pokemon" onChange={handleChange} value={input} />
+        <input type="text" name="name" data-testid="App__inputText" placeholder="Introduce Pokemon" onChange={handleChange} value={input} />
       </form>
 
       {isSearching && <div>Buscando...</div>}
