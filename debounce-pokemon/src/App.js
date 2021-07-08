@@ -1,24 +1,54 @@
-import logo from './logo.svg';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import PokemonList from './components/PokemonList';
+import useDebounce from './Hooks/useDebounce'
 import './App.css';
 
-function App() {
+const App = () => {
+
+  const [input, setInput] = useState('');
+  const [pokemon, setPokemon] = useState([]);
+  const [isSearching, setIsSearching] = useState(false);
+
+  const handleChange = (e) => {
+    setInput(e.target.value);
+  };
+
+  const searchPokemons = async () => {
+    let res = await axios.get(`https://pokeapi.co/api/v2/pokemon/${input}`);
+    setPokemon([res.data,...pokemon]);
+    console.log(res.data);
+    console.log(pokemon);
+  };
+
+  const debouncedSearchPokemon = useDebounce(input, 1000)
+
+  useEffect(() => {
+    if (debouncedSearchPokemon) {
+      setIsSearching(true);
+      searchPokemons(debouncedSearchPokemon).then(results => {
+        setIsSearching(false);
+        //setPokemon(pokemon);
+      });
+    } else {
+      setPokemon([]);
+    }
+  }, [debouncedSearchPokemon])
+  
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <section className="Card">
+      <form>
+        <label>Busca Pokemon: </label>
+        <input type="text" name="name" placeholder="Introduce Pokemon" onChange={handleChange} value={input} />
+      </form>
+
+      {isSearching && <div>Buscando...</div>}
+  
+      <div>
+        <PokemonList pokemon={pokemon}/>
+      </div>
+
+    </section>
   );
 }
 
